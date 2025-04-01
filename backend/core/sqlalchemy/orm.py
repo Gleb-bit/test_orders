@@ -1,6 +1,15 @@
 from typing import Union, Any, Sequence
 
-from sqlalchemy import select, Result, Row, RowMapping, insert, update
+from sqlalchemy import (
+    select,
+    Result,
+    Row,
+    RowMapping,
+    insert,
+    update,
+    BinaryExpression,
+    exists,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -57,6 +66,34 @@ class Orm:
         await session.refresh(instance)
 
         return instance
+
+    @classmethod
+    async def exists(
+        cls,
+        filter_expr: list | bool,
+        session: AsyncSession,
+        table = None,
+    ):
+        """
+        Method to check if any records in the model match the given filter expression.
+
+        :param:
+        - `table`: SQLAlchemy model.
+        - `filter_expr`: SQLAlchemy expression or boolean condition.
+        - `session`: SQLAlchemy asynchronous session.
+
+        :return:
+            `Result`: Object indicating whether matching records exist.
+        """
+
+        if isinstance(filter_expr, bool):
+            filter_expr = [filter_expr]
+
+        query = select(exists().where(*filter_expr))
+        if table:
+            query = query.select_from(table)
+
+        return (await session.execute(query)).scalar()
 
     @classmethod
     async def filter_by(
@@ -120,7 +157,7 @@ class Orm:
         cls,
         table,
         session: AsyncSession,
-        filters: Union[dict, bool] = dict,
+        filters: Union[dict, list[bool], BinaryExpression, bool] = dict,
         relations=None,
     ):
         """
@@ -139,6 +176,9 @@ class Orm:
         if isinstance(filters, dict):
             query = await cls.filter_by(table, filters, session, relations)
         else:
+            if isinstance(filters, BinaryExpression):
+                filters = [filters]
+
             query = await cls.where(table, filters, session, relations)
 
         return query.scalar()
@@ -163,7 +203,12 @@ class Orm:
 
     @classmethod
     async def where(
-        cls, model, filter_expr, session: AsyncSession, relations=None, execute=True
+        cls,
+        model,
+        filters: list[bool],
+        session: AsyncSession,
+        relations=None,
+        execute=True,
     ) -> Result:
         """
         Method to filter records in the model based on a filter expression.
@@ -182,6 +227,6 @@ class Orm:
             query = cls.get_query_with_relations(query, relations)
 
         if execute:
-            return await session.execute(query.where(filter_expr))
+            return await session.execute(query.where(*filters))
         else:
-            return query.where(filter_expr)
+            return query.where(*filters)

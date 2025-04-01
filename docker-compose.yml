@@ -53,7 +53,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: [ "CMD", "kafka-topics", "--bootstrap-server=localhost:9092", "--list" ]
+      test: [ "CMD", "kafka-topics", "--bootstrap-server=kafka:9092", "--list" ]
       interval: 10s
       timeout: 10s
       retries: 5

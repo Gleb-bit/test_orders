@@ -3,7 +3,7 @@ from aiokafka import AIOKafkaConsumer
 from config.settings import KAFKA_GROUP_ID, KAFKA_BOOTSTRAP_SERVERS
 
 
-def get_kafka_consumer() -> "AIOKafkaConsumer":
+def get_kafka_consumer() -> AIOKafkaConsumer:
     return AIOKafkaConsumer(
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         key_deserializer=lambda k: k.decode("utf-8"),

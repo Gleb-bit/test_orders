@@ -63,7 +63,7 @@ class JsonLogFormatter(logging.Formatter):
 
 
 def setup_logger(
-    component_name: Optional[str] = "app",
+    component_name: Optional[str] = "api",
     log_file: Optional[str] = None,
     in_file: bool = False,
 ) -> None:
@@ -85,7 +85,7 @@ def setup_logger(
     handler.setFormatter(JsonLogFormatter())
     logger.addHandler(handler)
 
-    logger.setLevel(logging.ERROR)
+    logger.setLevel(logging.INFO)
 
     for lib in LIBS:
         lib_logger = logging.getLogger(lib)

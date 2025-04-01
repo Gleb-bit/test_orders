@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import HTTPException, Response
+from pydantic import BaseModel
 from sqlalchemy import asc, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,7 +44,9 @@ class Crud:
         for field in unique_fields:
             await cls.check_field_unique(model, data, field, session, obj_id)
 
-    async def create(self, data, session: AsyncSession, relations=None):
+    async def create(
+        self, data: dict | BaseModel, session: AsyncSession, relations=None
+    ):
         """
         Method that creates a new instance of the model
 
@@ -108,8 +111,8 @@ class Crud:
         relations=None,
         sort_field: Optional[str] = None,
         sort_order: Optional[str] = "asc",
-        filters: list = None,
-        **sql_methods
+        filters: list[bool] = None,
+        **sql_methods,
     ):
         """
         Метод для получения списка объектов с фильтрацией и сортировкой.
@@ -149,7 +152,7 @@ class Crud:
         execution = await session.execute(query)
         return execution.scalars().all()
 
-    async def retrieve(self, obj_id: int, session: AsyncSession, relations=None):
+    async def retrieve(self, obj_id: Any, session: AsyncSession, relations=None):
         """
         Method that retrieves an instance of the model by ID
 
@@ -167,7 +170,7 @@ class Crud:
         return obj
 
     async def update(
-        self, data: dict, obj_id: int, session: AsyncSession, relations=None
+        self, data: dict, obj_id: Any, session: AsyncSession, relations=None
     ):
         """
         Method that updates an instance of the model

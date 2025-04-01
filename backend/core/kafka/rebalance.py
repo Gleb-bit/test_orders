@@ -14,6 +14,8 @@ logger = logging.getLogger("consumer")
 
 class PeriodicRebalanceListener(ConsumerRebalanceListener):
     def __init__(self, consumer: "AIOKafkaConsumer", rebalance_interval: int):
+        self.current_partitions = None
+        self.rebalance_task = None
         self.consumer = consumer
         self.rebalance_interval = rebalance_interval
         self.topics: list[TopicPartition] = []
@@ -121,11 +123,11 @@ class PeriodicRebalanceListener(ConsumerRebalanceListener):
 
         return topics_partitions
 
-    async def start(self) -> None:
-        self.topics = await self.get_topics()
+    async def start(self, process_func: callable) -> None:
         await ensure_topics_exist(self.admin_client)
-        await self.consumer.start()
+        self.topics = await self.get_topics()
 
+        await self.consumer.start()
         self.consumer.assign(self.topics)
 
         self.rebalance_task = asyncio.create_task(self.rebalance_loop())
@@ -138,11 +140,11 @@ class PeriodicRebalanceListener(ConsumerRebalanceListener):
                         "Получено сообщение",
                         extra=get_msg_data(msg) | {"message_uuid": message_uuid},
                     )
-                    pass
+                    process_func(msg)
+
         except Exception as e:
             logger.error(f"Ошибка при запуске консьюмера: {e}")
 
-            pass
         finally:
             if hasattr(self, "rebalance_task"):
                 self.rebalance_task.cancel()  # Отменяем задачу ребалансировки

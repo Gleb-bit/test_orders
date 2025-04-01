@@ -12,7 +12,9 @@ from redis.asyncio import Redis
 from config.settings import KAFKA_BOOTSTRAP_SERVERS
 
 
-async def get_partition_key(redis: Redis, topic: str, partition_key: str, logger: logging.Logger) -> int:
+async def get_partition_key(
+    redis: Redis, topic: str, partition_key: str, logger: logging.Logger
+) -> int:
     # Получаем текущий ключ партиции для topic_partition_key
     partition_key_int = await redis.get(f"kafka_partition_key_{topic}_{partition_key}")
 
@@ -60,7 +62,10 @@ async def get_partition_key(redis: Redis, topic: str, partition_key: str, logger
 
 
 async def create_partition(
-    topic: str, new_total_partitions: int, bootstrap_servers: str, logger: logging.Logger
+    topic: str,
+    new_total_partitions: int,
+    bootstrap_servers: str,
+    logger: logging.Logger,
 ) -> bool:
     """Создает новую партицию в топике"""
     admin_client = None
@@ -112,7 +117,9 @@ async def ensure_partitions_exist(
             logger.info(
                 f"Создание {required_partitions - current_partitions} новых партиций для топика {topic}"
             )
-            await create_partition(topic, required_partitions, bootstrap_servers, logger)
+            await create_partition(
+                topic, required_partitions, bootstrap_servers, logger
+            )
 
     except Exception as e:
         logger.error(
@@ -125,7 +132,7 @@ async def ensure_partitions_exist(
 
 async def send_to_producer(
     producer: "AIOKafkaProducer",
-    processed_objects: list[dict],
+    processed_objects: list,
     logger: logging.Logger,
     redis: Redis,
     topic: str = "new_order",
@@ -152,7 +159,9 @@ async def send_to_producer(
 
     for obj in processed_objects:
         try:
-            partition_key_int = await get_partition_key(redis, topic, partition_key, logger)
+            partition_key_int = await get_partition_key(
+                redis, topic, partition_key, logger
+            )
 
             await producer.send_and_wait(
                 topic,
@@ -171,10 +180,7 @@ async def send_to_producer(
                 )
 
                 success = await create_partition(
-                    topic,
-                    partition_key_int,
-                    KAFKA_BOOTSTRAP_SERVERS,
-                    logger
+                    topic, partition_key_int, KAFKA_BOOTSTRAP_SERVERS, logger
                 )
 
                 if success:
@@ -203,3 +209,11 @@ async def send_to_producer(
 
         finally:
             await producer.stop()
+
+
+async def get_producer() -> AIOKafkaProducer:
+    return AIOKafkaProducer(
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+        key_serializer=lambda k: k.encode("utf-8"),
+        value_serializer=lambda v: v.encode("utf-8"),
+    )

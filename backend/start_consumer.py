@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 
+from apps.consumer.services import process_message
 from config.logger import setup_logger
 from core.kafka.utils import get_kafka_consumer
 from core.kafka.rebalance import PeriodicRebalanceListener
@@ -15,7 +16,7 @@ async def main():
     listener = PeriodicRebalanceListener(consumer, rebalance_interval=2)
 
     try:
-        await listener.start()
+        await listener.start(process_message)
     except asyncio.CancelledError:
         logger.info("Получен сигнал завершения")
     except Exception as e:

@@ -107,7 +107,7 @@ class KafkaManager:
         try:
             self.admin_client.delete_topics([topic])
         except Exception:
-            pass
+            logger.error("Ошибка при удалении топика")
 
     def delete_all_topics(self):
         for topic in self.get_topics():

@@ -2,6 +2,7 @@ from os import environ
 
 # FastAPI
 DATABASE_URL = environ.get("DATABASE_URL")
+SECRET_KEY = environ.get("SECRET_KEY")
 
 # Redis
 REDIS_HOST = environ.get("REDIS_HOST")
@@ -21,7 +22,7 @@ task_serializer = "json"
 broker_connection_retry_on_startup = True
 
 # Kafka
-KAFKA_BOOTSTRAP_SERVERS = environ.get("KAFKA_BOOTSTRAP_SERVERS")
+KAFKA_BOOTSTRAP_SERVERS = environ.get("BOOTSTRAP_SERVERS")
 KAFKA_GROUP_ID = environ.get("KAFKA_GROUP_ID")
 KAFKA_PARTITIONS = int(environ.get("KAFKA_PARTITIONS"))
 KAFKA_REPLICATION_FACTOR = int(environ.get("KAFKA_REPLICATION_FACTOR"))
